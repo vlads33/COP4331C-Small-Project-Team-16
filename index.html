@@ -12,18 +12,21 @@
 <link href="css/style.css" rel="stylesheet">
 </head>
 
-<body>
+<body onload="registered();">
 <h1 id="title">Contact Manager</h1>
 
 <form onsubmit="doLogin(); return false;">
 <fieldset>
-  <legend>PLEASE LOG IN</legend>
+  <legend>Log In</legend>
   <input type="text" id="loginName" placeholder="Username" required><br>
-  <input type="password" id="loginPassword" placeholder="Password" required><br>
-  <input type="submit" id="loginButton" value="Login">
+  <input type="password" id="loginPassword" placeholder="Password" required><br><br>
+  <input type="submit" id="loginButton" value="Login"><br>
   <span id="loginResult"></span>
 </fieldset>
 </form>
+
+<br>
+<span id="registerLink">Don't have an account? Sign up <a href="register.html">here!</a></span>
 
   
 </body>
