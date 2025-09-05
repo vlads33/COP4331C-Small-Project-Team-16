@@ -1,11 +1,19 @@
-const urlBase = "http://cop-team16.xyz/API";
+const urlBase = "http://cop-team16.xyz/LAMPAPI";
 const extension = "php";
 
 let userID = 0;
 let firstName = "";
 let lastName = "";
-let justRegistered = true;
+let justRegistered = false;
 
+if (window.location.pathname == "/" && justRegistered === true) {
+    window.onload = function() {
+        justRegistered = false;
+        document.getElementById("loginResult").innerHTML = "Account Created Successfully!";
+        document.getElementById("registerLink").innerHTML = "";
+    };
+}
+/*
 function registered() {
     // acknowledge if user just registered and remove new account link
     if (justRegistered === true) {
@@ -13,7 +21,7 @@ function registered() {
         document.getElementById("loginResult").innerHTML = "Account Created Successfully!";
         document.getElementById("registerLink").innerHTML = "";
     }
-}
+}*/
 
 function resetDefaults() {
     userID = 0;
@@ -54,7 +62,7 @@ function doLogin() { // reads username and password
     };
     
     // call API, call loginfunc on result, and printerr if an error happens
-    callAPI("Login", { login:login, password:hash }, login, printerr);
+    callAPI("Login", { login:login, password:hash }, loginfunc, printerr);
 }
 
 function doRegister() { // reads firstname, lastname, username, and password
