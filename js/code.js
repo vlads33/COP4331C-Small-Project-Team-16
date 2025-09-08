@@ -6,22 +6,17 @@ let firstName = "";
 let lastName = "";
 let justRegistered = false;
 
-if (window.location.pathname == "/" && justRegistered === true) {
-    window.onload = function() {
-        justRegistered = false;
-        document.getElementById("loginResult").innerHTML = "Account Created Successfully!";
-        document.getElementById("registerLink").innerHTML = "";
-    };
-}
-/*
 function registered() {
+    // set justRegistered to cookie value, parsed as boolean
+    let data = readCookie("justRegistered");
+    justRegistered = (data["justRegistered"] === 'true');
+
     // acknowledge if user just registered and remove new account link
-    if (justRegistered === true) {
-        justRegistered = false;
+    if (window.location.pathname == "/" && justRegistered === true) {
         document.getElementById("loginResult").innerHTML = "Account Created Successfully!";
         document.getElementById("registerLink").innerHTML = "";
     }
-}*/
+}
 
 function resetDefaults() {
     userID = 0;
@@ -38,6 +33,7 @@ function doLogin() { // reads username and password
     let hash = md5( document.getElementById("loginPassword").value );
     
     document.getElementById("loginResult").innerHTML = ""; // reset result field
+
     
     let loginfunc = function(jsonObject) {
         userID = jsonObject.id;
@@ -51,7 +47,7 @@ function doLogin() { // reads username and password
         // save JSON result info
         firstName = jsonObject.firstName;
         lastName = jsonObject.lastName;
-        saveCookie();
+        saveCookie({ "firstName":firstName, "lastName":lastName, "userID":userID }, 20);
         
         window.location.href = "contacts.html"; // link to contacts page
     };
@@ -62,7 +58,7 @@ function doLogin() { // reads username and password
     };
     
     // call API, call loginfunc on result, and printerr if an error happens
-    callAPI("Login", { login:login, password:hash }, loginfunc, printerr);
+    callAPI("Login", { "login":login, "password":hash }, loginfunc, printerr);
 }
 
 function doRegister() { // reads firstname, lastname, username, and password
@@ -73,10 +69,11 @@ function doRegister() { // reads firstname, lastname, username, and password
     let hash = md5( document.getElementById("loginPassword").value );
     
     document.getElementById("registerResult").innerHTML = ""; // reset result field
+
     
     // if registered, redirect to login page and display message
     let registerfunc = function(jsonObject) {
-        justRegistered = true;
+        saveCookie({ "justRegistered":true }, 1);
         window.location.href = "index.html"; // link to login page
     };
     
@@ -86,17 +83,70 @@ function doRegister() { // reads firstname, lastname, username, and password
     };
     
     // call API, call registerfunc on result, and printerr if an error happens
-    callAPI("Register", { firstName:first, lastName:last, login:login, password:hash }, registerfunc, printerr);
+    callAPI("Register", { "firstName":first, "lastName":last, "login":login, "password":hash }, registerfunc, printerr);
 }
 
-function saveCookie() {
-    // construct date 20 minutes ahead of present
-    let minutes = 20;
+function readAccount() {
+    // read account cookie
+    let data = readCookie("firstName");
+
+    userID = data[userID]; // try to read userID
+
+    if (typeof(userID) != undefined) {
+        // if successful, set variable values
+        userID = parseInt(userID.trim());
+        firstName = data["firstName"];
+        lastName = data["lastName"];
+    }
+    else {
+        // otherwise, return to login
+        window.location.href = "index.html";
+    }
+}
+
+function saveCookie(params, duration) {
+    // construct date duration minutes ahead of present
     let date = new Date();
-    date.setTime(date.getTime() + (minutes * 60 * 1000));
+    date.setTime(date.getTime() + (duration * 60 * 1000));
     
-    // set cookie text, expires on constructed date
+    // construct cookie body from params
+    let text = ``;
+    for (const key in params) {
+        text += `${key}=${params[key]},`;
+    }
+    
+    // drop comma from last parameter and add expiration date
+    text = text.substring(0, text.length - 1) + `;expires=${date.toGMTString()}`;
+    
+    
+    // set cookie to text, expires on constructed date
     document.cookie = `firstName=${firstName},lastname=${lastName},userID=${userID};expires=${date.toGMTString()}`;
+}
+
+function readCookie(name) { // note name of a cookie is name of first variable
+    // get data from cookie and trim it
+    let data = getCookie(name).split(",");
+    data = data.map( (e) => e.trim() );
+
+    // create dictionary to store variables
+    dict = {};
+
+    // record pairs of cookie variables in dictionary
+    for (const i in data) {
+        let tokens = i.split("=");
+        dict[tokens[0]] = dict[tokens[1]];
+    }
+
+    return dict;
+}
+
+function getCookie(name) {
+    // grab data after cookie name
+    let data = document.cookie;
+    let crumbs = data.split(`${name}=`);
+
+    // return cookie data, remove everything after it, preappend cookie name
+    return (`${name}=` + crumbs.pop().split(";")[0]);
 }
 
 // needs API name, parameters as a dictionary, a function taking one string parameter (JSON API output), and a function taking an error
