@@ -59,9 +59,10 @@ input[type="submit"],button{
   padding:10px 14px;
   background:#0a0a0a;
   color:var(--fg);
-  border:0;
+  border: 2px solid var(--accent);
   border-radius:4px;
   cursor:pointer;
+  width:100px;
 }
 
 #loginResult,
@@ -87,3 +88,7 @@ thead th{
   font-size:.92rem;
 }
 .muted{color:var(--muted)}
+a {
+  color:var(--accent);
+  text-decoration: underline;
+}
