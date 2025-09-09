@@ -12,7 +12,7 @@ function registered() {
     justRegistered = (data["justRegistered"] === 'true');
 
     // acknowledge if user just registered and remove new account link
-    if (window.location.pathname == "/" && justRegistered === true) {
+    if ((window.location.pathname == "/" || window.location.pathname == "/index.html") && justRegistered === true) {
         document.getElementById("loginResult").innerHTML = "Account Created Successfully!";
         document.getElementById("registerLink").innerHTML = "";
     }
@@ -120,7 +120,7 @@ function saveCookie(params, duration) {
     
     
     // set cookie to text, expires on constructed date
-    document.cookie = `firstName=${firstName},lastname=${lastName},userID=${userID};expires=${date.toGMTString()}`;
+    document.cookie = text;
 }
 
 function readCookie(name) { // note name of a cookie is name of first variable
@@ -129,12 +129,12 @@ function readCookie(name) { // note name of a cookie is name of first variable
     data = data.map( (e) => e.trim() );
 
     // create dictionary to store variables
-    dict = {};
+    let dict = {};
 
     // record pairs of cookie variables in dictionary
-    for (const i in data) {
+    for (const i of data) {
         let tokens = i.split("=");
-        dict[tokens[0]] = dict[tokens[1]];
+        dict[tokens[0]] = tokens[1];
     }
 
     return dict;
