@@ -52,13 +52,8 @@ function doLogin() { // reads username and password
         window.location.href = "contacts.html"; // link to contacts page
     };
     
-    // if error, print to login result
-    let printerr = function(err) {
-        document.getElementById("loginResult").innerHTML = err.message;
-    };
-    
-    // call API, call loginfunc on result, and printerr if an error happens
-    callAPI("Login", { "login":login, "password":hash }, loginfunc, printerr);
+    // call API, call loginfunc on result, and print error to loginResult if an error happens
+    callAPI("Login", { "login":login, "password":hash }, loginfunc, printError("loginResult"));
 }
 
 function doRegister() { // reads firstname, lastname, username, and password
@@ -77,22 +72,60 @@ function doRegister() { // reads firstname, lastname, username, and password
         window.location.href = "index.html"; // link to login page
     };
     
-    // if error, print to register result
-    let printerr = function(err) {
-        document.getElementById("registerResult").innerHTML = err.message;
+    // call API, call registerfunc on result, and print error to registerResult if an error happens
+    callAPI("Register", { "firstName":first, "lastName":last, "login":login, "password":hash }, registerfunc, printError("registerResult"));
+}
+
+function createContact() { // reads firstname, lastname, email, phone, and notes
+    // save new contact data
+    let first = document.getElementById("firstName").value;
+    let last = document.getElementById("lastName").value;
+    let email = document.getElementById("email").value;
+    let phone = document.getElementById("phone").value;
+    let notes = document.getElementById("notes").value;
+
+    // if created, print confirmation to operation result, and trigger search refresh
+    let createfunc = function(jsonObject) {
+        document.getElementById("operationResult").innerHTML = "Contact added successfully";
+        searchContacts();
     };
-    
-    // call API, call registerfunc on result, and printerr if an error happens
-    callAPI("Register", { "firstName":first, "lastName":last, "login":login, "password":hash }, registerfunc, printerr);
+
+    // call API, call createfunc on result, and print error to operationResult if an error happens
+    callAPI("AddContact", { "userID":userID, "firstName":first, "lastName":last, "email":email, "phone":phone, "notes":notes }, createfunc, printError("operationResult"));
+}
+
+function searchContacts() { // reads search text; triggers onchange instead of onsubmit
+    // return if input is empty, trimming spaces
+    if (document.getElementById("searchInput").value.trim() === "") {
+        return;
+    }
+
+    // save search data
+    let search = document.getElementById("searchInput").value;
+
+    // if searched, enter results as table rows
+    let searchfunc = function(jsonObject) {
+        for(let i = 0; i < jsonObject.results.length; i++) {
+            console.log(jsonObject.results[i]); // for now, just print results to console
+        }
+    };
+
+    // call API, call searchfunc on result, and print error to operationResult if an error happens
+    callAPI("SearchContacts", { "userID":userID, "search":search }, searchfunc, printError("operationResult"));
+}
+
+// given relevant search result data, format the result into a table row and return as string
+function tableFormat(firstName, lastName, email, phone, notes) {
+    return `<tr><td>${firstName}</td><td>${lastName}</td><td>${email}</td><td>${phone}</td><td>${notes}</td></tr>`;
 }
 
 function readAccount() {
     // read account cookie
     let data = readCookie("firstName");
 
-    userID = data[userID]; // try to read userID
+    userID = data["userID"]; // try to read userID
 
-    if (typeof(userID) != undefined) {
+    if (typeof userID === 'string' || userID instanceof String) {
         // if successful, set variable values
         userID = parseInt(userID.trim());
         firstName = data["firstName"];
@@ -176,4 +209,11 @@ function callAPI(name, params, func, errfunc) {
     catch(err) {
         errfunc(err);
     }
+}
+
+// takes an element ID, and returns a function that prints an error to that element
+function printError(elementID) {
+    return function(err) {
+        document.getElementById(element).innerHTML = err.message;
+    };
 }
