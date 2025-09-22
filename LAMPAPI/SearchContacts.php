@@ -28,12 +28,12 @@
 				$searchResults .= ",";
 			}
 			$searchCount++;
-			$searchResults .= '"' . $row["ID"] . ', ' . $row["FirstName"] . ', ' . $row["LastName"] . ', ' . $row["Email"] . ', ' . $row["Phone"] . ', ' . $row["Notes"] . '"';
+			$searchResults .= '"' . $row["ID"] . ', ' . $row["FirstName"] . ', ' . $row["LastName"] . ', ' . $row["Email"] . ', ' . $row["Phone"] . ', ' . $row["Notes"] . ', ' . $row["DateCreated"] . '"';
 		}
 		
 		if( $searchCount == 0 )
 		{
-			returnWithError( "No Records Found" );
+			returnWithInfo( "" );
 		}
 		else
 		{
