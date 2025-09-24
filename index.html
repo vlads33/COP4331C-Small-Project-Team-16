@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Contact Manager</title>
+  <title>Cosmic Contacts</title>
   
   <script src="js/code.js"></script>
   <script src="js/md5.js"></script>
@@ -15,21 +15,11 @@
 <body>
   <!-- Single centered wrapper so body flex centers the page -->
   <main>
-    <h1 id="title">Contact Manager</h1>
-
-    <form id="loginForm" onsubmit="doLogin(); return false;">
-      <fieldset>
-        <legend>Log In</legend>
-
-        <input type="text" id="loginName" placeholder="Username" autocomplete="username" required />
-        <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required />
-
-        <input type="submit" id="loginButton" value="Log In" class="primary" />
-        <span id="loginResult"></span>
-      </fieldset>
-    </form>
-
-    <p id="registerLink">Don’t have an account? Sign up <a href="register.html">here!</a></p>
+    <h1 id="title">Cosmic Contacts</h1>
   </main>
+  <a href="login.html" id="logLink">Login</a>
+  <div class="footer">
+    <a href="https://github.com/vlads33/COP4331C-Small-Project-Team-16" id="github">Github</a>
+  </div>
 </body>
 </html>

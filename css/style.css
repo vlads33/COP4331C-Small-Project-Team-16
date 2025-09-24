@@ -27,6 +27,18 @@ main{width:min(640px,100%)}
 }
 form{width:100%}
 
+.footer{
+  position:fixed;
+  left:0;
+  bottom:0;
+  width:100%;
+  text-align:center;
+}
+
+#logLink{
+  float:right;
+}
+
 fieldset{
   margin:0;
   padding:0;
