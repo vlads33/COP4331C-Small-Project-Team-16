@@ -105,13 +105,103 @@ function searchContacts() { // reads search text; triggers onchange instead of o
 
     // if searched, enter results as table rows
     let searchfunc = function(jsonObject) {
+        // save table body element to variable and clear innerHTML
+        const table = document.getElementById("contactList");
+        table.innerHTML = "";
+
+        // iterate trough all returned contacts and create rows for each
         for(let i = 0; i < jsonObject.results.length; i++) {
-            console.log(jsonObject.results[i]); // for now, just print results to console
+            const row = document.createElement("tr");
+            table.appendChild(row);
+
+            // get returned string as array, split by commas; limit 6 in case notes field has commas.
+            const contact = parseContact(jsonObject.results[i]);
+            const contactID = parseInt(contact[0]); // parse contact ID to integer and save
+
+            // populate cells with data
+            for (let j = 1; j < contact.length; j++) {
+                const cell = document.createElement("td");
+                cell.innerHTML = contact[j];
+                row.appendChild(cell);
+            }
+
+            // create edit button for contact and append to row
+            const edit = createButton(i, "Edit");
+            edit.addEventListener("click", () => onClickEdit(contactID, contact[1], contact[2], contact[3], contact[4], contact[5]));
+            row.appendChild(edit);
+            //row.appendChild(createButton(i, "Edit",
+                //`editButton(${contactID}, ${contact[1]}, ${contact[2]}, ${contact[3]}, ${contact[4], ${contact[5]}})`));
+
+
+            // create delete button for contact and append to row
+            const del = createButton(i, "Delete");
+            del.addEventListener("click", () => deleteContact(contactID, `${contact[1]} + ${contact[2]}`));
+            row.appendChild(del);
+
+            console.log(jsonObject.results[i]);
+            console.log(contact);
         }
     };
 
     // call API, call searchfunc on result, and print error to operationResult if an error happens
     callAPI("SearchContacts", { "userID":userID, "search":search }, searchfunc, printError("operationResult"));
+}
+
+// to process API output of search function
+function parseContact(input) {
+    // split input by commas, initialize empty array for result
+    let contact = input.split(",");
+    let result = [];
+
+    // copy first 6 variables directly into result
+    for (let i = 0; i < 6; i++) {
+        result.push(contact[i]);
+    }
+
+    // merge anything after 6 (the notes section) into result[6]
+    let str = "";
+    for (let i = 6; i < contact.length; i++) {
+        str += contact[i];
+        str += ","; // put commas back in string
+    }
+    str = str.substring(0, str.length - 1); // chop off trailing comma
+    result.push(str);
+
+    return result; // return resulting array
+}
+
+function createButton(rowNum, text) {
+    // create button with id based on text and rowNum and class based on text
+    const button = document.createElement("button");
+    button.setAttribute("id", (text.toLowerCase() + rowNum));
+    button.setAttribute("class", text.toLowerCase()); // set class for formatting
+    //button.setAttribute("onclick", funcText);
+
+    // set button text to text and return the button
+    button.innerHTML = text;
+    return button;
+}
+
+// called when a contact's delete button is pressed; gives warning, then deletes contact
+function deleteContact(contactID, name) {
+    // return if user cancels delete
+    if (!confirm(`Really delete contact "${name}?" This cannot be undone`)) {
+        return;
+    }
+
+    // if deleted, print confirmation to operation result, and trigger search refresh
+    let deletefunc = function(jsonObject) {
+        document.getElementById("operationResult").innerHTML = "Contact deleted successfully";
+        searchContacts();
+    };
+
+    // call API, call createfunc on result, and print error to operationResult if an error happens
+    callAPI("DeleteContact", { "ContactID":contactID }, deletefunc, printError("operationResult"));
+}
+
+// call when a contact's edit button is pressed.
+function onClickEdit(contactID, firstName, lastName, email, phone, notes) {
+    console.log(`${contactID}, ${firstName}, ${lastName}, ${email}, ${phone}, ${notes}`);
 }
 
 // given relevant search result data, format the result into a table row and return as string
