@@ -1,4 +1,4 @@
-const urlBase = "http://cop-team16.xyz/LAMPAPI";
+const urlBase = "http://localhost/COP4331C-Small-Project-Team-16-1/LAMPAPI";
 const extension = "php";
 
 let userID = 0;
@@ -394,7 +394,10 @@ function callAPI(name, params, func, errfunc) {
 // takes an element ID, and returns a function that prints an error to that element
 function printError(elementID) {
     return function(err) {
-        document.getElementById(element).innerHTML = err.message;
+        const target = document.getElementById(elementID);
+        if (target) {
+            target.innerHTML = err?.message || err;
+        }
     };
 }
 
