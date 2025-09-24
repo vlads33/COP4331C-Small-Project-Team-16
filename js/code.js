@@ -12,7 +12,7 @@ function registered() {
     justRegistered = (data["justRegistered"] === 'true');
 
     // acknowledge if user just registered and remove new account link
-    if ((window.location.pathname == "/" || window.location.pathname == "/index.html") && justRegistered === true) {
+    if (window.location.pathname == "/login.html" && justRegistered === true) {
         document.getElementById("loginResult").innerHTML = "Account Created Successfully!";
         document.getElementById("registerLink").innerHTML = "";
     }
@@ -69,7 +69,7 @@ function doRegister() { // reads firstname, lastname, username, and password
     // if registered, redirect to login page and display message
     let registerfunc = function(jsonObject) {
         saveCookie({ "justRegistered":true }, 1);
-        window.location.href = "index.html"; // link to login page
+        window.location.href = "login.html"; // link to login page
     };
     
     // call API, call registerfunc on result, and print error to registerResult if an error happens
@@ -84,14 +84,31 @@ function createContact() { // reads firstname, lastname, email, phone, and notes
     let phone = document.getElementById("phone").value;
     let notes = document.getElementById("notes").value;
 
+    // accept input only if either email or phone provided (name already required)
+    if (email === "" && phone === "") {
+        document.getElementById("operationResult").innerHTML = "Must provide either email or phone";
+        return;
+    }
+
+    // validate phone number and convert to dash only format
+    phone = phoneParse(phone);
+    if (!phone && phone !== "") {
+        document.getElementById("operationResult").innerHTML = "Invalid Phone Number";
+        return;
+    }
+
     // if created, print confirmation to operation result, and trigger search refresh
     let createfunc = function(jsonObject) {
         document.getElementById("operationResult").innerHTML = "Contact added successfully";
+        document.getElementById("contactForm").reset(); // reset form fields
         searchContacts();
     };
 
     // call API, call createfunc on result, and print error to operationResult if an error happens
     callAPI("AddContact", { "userID":userID, "firstName":first, "lastName":last, "email":email, "phone":phone, "notes":notes }, createfunc, printError("operationResult"));
+
+    // remove output text after 5 seconds
+    setTimeout(() => document.getElementById("operationResult").innerHTML = "", 5000);
 }
 
 function searchContacts() { // reads search text; triggers onchange instead of onsubmit
@@ -115,8 +132,12 @@ function searchContacts() { // reads search text; triggers onchange instead of o
             table.appendChild(row);
 
             // get returned string as array, split by commas; limit 6 in case notes field has commas.
-            const contact = parseContact(jsonObject.results[i]);
-            const contactID = parseInt(contact[0]); // parse contact ID to integer and save
+            let contact = parseContact(jsonObject.results[i]);
+            let contactID = parseInt(contact[0]); // parse contact ID to integer and save
+
+            // format phone number and date
+            contact[4] = phoneFormat(contact[4]);
+            contact[5] = dateFormat(contact[5]);
 
             // populate cells with data
             for (let j = 1; j < contact.length; j++) {
@@ -127,19 +148,13 @@ function searchContacts() { // reads search text; triggers onchange instead of o
 
             // create edit button for contact and append to row
             const edit = createButton(i, "Edit");
-            edit.addEventListener("click", () => onClickEdit(contactID, contact[1], contact[2], contact[3], contact[4], contact[5]));
+            edit.addEventListener("click", () => onClickEdit(contactID, contact[1], contact[2], contact[3], contact[4], contact[6]));
             row.appendChild(edit);
-            //row.appendChild(createButton(i, "Edit",
-                //`editButton(${contactID}, ${contact[1]}, ${contact[2]}, ${contact[3]}, ${contact[4], ${contact[5]}})`));
-
 
             // create delete button for contact and append to row
             const del = createButton(i, "Delete");
-            del.addEventListener("click", () => deleteContact(contactID, `${contact[1]} + ${contact[2]}`));
+            del.addEventListener("click", () => deleteContact(contactID, `${contact[1]} ${contact[2]}`));
             row.appendChild(del);
-
-            console.log(jsonObject.results[i]);
-            console.log(contact);
         }
     };
 
@@ -175,7 +190,7 @@ function createButton(rowNum, text) {
     const button = document.createElement("button");
     button.setAttribute("id", (text.toLowerCase() + rowNum));
     button.setAttribute("class", text.toLowerCase()); // set class for formatting
-    //button.setAttribute("onclick", funcText);
+    button.setAttribute("type", "button"); // so button doesn't submit the form
 
     // set button text to text and return the button
     button.innerHTML = text;
@@ -197,16 +212,83 @@ function deleteContact(contactID, name) {
 
     // call API, call createfunc on result, and print error to operationResult if an error happens
     callAPI("DeleteContact", { "ContactID":contactID }, deletefunc, printError("operationResult"));
+
+    // remove output text after 5 seconds
+    setTimeout(() => document.getElementById("operationResult").innerHTML = "", 5000);
 }
 
 // call when a contact's edit button is pressed.
-function onClickEdit(contactID, firstName, lastName, email, phone, notes) {
-    console.log(`${contactID}, ${firstName}, ${lastName}, ${email}, ${phone}, ${notes}`);
+function onClickEdit(contactID, first, last, email, phone, notes) {
+    // swap form to edit
+    const form = document.getElementById("contactForm");
+    form.setAttribute("onsubmit", `editContact(${contactID}); return false;`);
+    document.getElementById("formTitle").innerHTML = "Edit Contact";
+    document.getElementById("saveButton").value = "Save";
+
+    // add cancel button
+    const cancel = createButton(1, "Cancel");
+    cancel.setAttribute("onclick", "revertForm(true)");
+    form.firstElementChild.appendChild(cancel);
+
+    // load contact data into form
+    document.getElementById("firstName").value = first;
+    document.getElementById("firstName").focus(); // set type cursor to firstName
+    document.getElementById("lastName").value = last;
+    document.getElementById("email").value = email;
+    document.getElementById("phone").value = phone;
+    document.getElementById("notes").value = notes;
 }
 
-// given relevant search result data, format the result into a table row and return as string
-function tableFormat(firstName, lastName, email, phone, notes) {
-    return `<tr><td>${firstName}</td><td>${lastName}</td><td>${email}</td><td>${phone}</td><td>${notes}</td></tr>`;
+function editContact(contactID) { // reads firstname, lastname, email, phone, and notes
+    // save revised contact data
+    let first = document.getElementById("firstName").value;
+    let last = document.getElementById("lastName").value;
+    let email = document.getElementById("email").value;
+    let phone = document.getElementById("phone").value;
+    let notes = document.getElementById("notes").value;
+
+    // accept input only if either email or phone provided (name already required)
+    if (email === "" && phone === "") {
+        document.getElementById("operationResult").innerHTML = "Must provide either email or phone";
+        return;
+    }
+
+    // validate phone number and convert to dash only format
+    phone = phoneParse(phone);
+    if (!phone && phone !== "") {
+        document.getElementById("operationResult").innerHTML = "Invalid Phone Number";
+        return;
+    }
+
+    // if edited, print confirmation to operation result, trigger search refresh, and revert form to create
+    let editfunc = function(jsonObject) {
+        document.getElementById("operationResult").innerHTML = "Contact edited successfully";
+        revertForm();
+        searchContacts();
+    };
+
+    // call API, call createfunc on result, and print error to operationResult if an error happens
+    callAPI("UpdateContact", { "ContactID":contactID, "FirstName":first, "LastName":last, "Email":email, "PhoneNumber":phone, "Notes":notes }, editfunc, printError("operationResult"));
+
+    // remove output text after 5 seconds
+    setTimeout(() => document.getElementById("operationResult").innerHTML = "", 5000);
+}
+
+// revert edit contact form back to create form
+function revertForm(clearOpResult = false) {
+    // swap form to create; delete cancel button
+    const form = document.getElementById("contactForm");
+    form.setAttribute("onsubmit", "createContact(); return false;");
+    document.getElementById("formTitle").innerHTML = "Create Contact";
+    form.firstElementChild.removeChild(document.getElementById("cancel1"));
+    form.reset(); // reset form fields
+    document.getElementById("saveButton").value = "Create";
+    document.getElementById("firstName").focus(); // set type cursor to firstName
+
+    // clear operation result only if true is passed
+    if (clearOpResult) {
+        document.getElementById("operationResult").innerHTML = "";
+    }
 }
 
 function readAccount() {
@@ -223,7 +305,7 @@ function readAccount() {
     }
     else {
         // otherwise, return to login
-        window.location.href = "index.html";
+        window.location.href = "login.html";
     }
 }
 
@@ -272,6 +354,14 @@ function getCookie(name) {
     return (`${name}=` + crumbs.pop().split(";")[0]);
 }
 
+function doLogout() {
+    userId = 0;
+    firstName = "";
+    lastName = "";
+    document.cookie = "firstName= ; expires = Thu, 01 Jan 1970 00:00:00 GMT";
+    window.location.href = "index.html";
+}
+
 // needs API name, parameters as a dictionary, a function taking one string parameter (JSON API output), and a function taking an error
 function callAPI(name, params, func, errfunc) { 
     let jsonPayload = JSON.stringify(params);
@@ -306,4 +396,46 @@ function printError(elementID) {
     return function(err) {
         document.getElementById(element).innerHTML = err.message;
     };
+}
+
+// format date/time in a more readable way
+function dateFormat(str) {
+    // split date and time into component parts
+    let dateTime = str.split(" ");
+    let date = dateTime[0].split("-");
+    let time = dateTime[1].split(":");
+
+    date = `${date[1]}/${date[2]}/${date[0]}`; // parse date
+
+    // get hour as number, set default suffix to AM
+    let hour = parseInt(time[0]);
+    let suffix = "AM";
+
+    // if afternoon, switch to PM
+    if (hour > 12) {
+        hour -= 12;
+        suffix = "PM";
+    }
+
+    return `${date} ${hour}:${time[1]} ${suffix}`; // return well-formatted date
+}
+
+// properly format a phone number given phone number separated by dashes
+function phoneFormat(str) {
+    let phone = str.split("-");
+    return `(${phone[0]}) ${phone[1]}-${phone[2]}`;
+}
+
+// given a valid phone number in any format, convert to numbers separated by dashes
+function phoneParse(str) {
+    let num = str.replace(/\D/g, ""); // remove all non-digit characters
+
+    // return phone number if valid
+    if (num.length === 10) {
+        return `${num.substring(0,3)}-${num.substring(3,6)}-${num.substring(6,10)}`;
+    }
+    else if (num.length === 0) {
+        return "";
+    }
+    return (num.length === 0); // otherwise return false
 }
