@@ -425,20 +425,25 @@ function dateFormat(str) {
 
 // properly format a phone number given phone number separated by dashes
 function phoneFormat(str) {
-    let phone = str.split("-");
-    return `(${phone[0]}) ${phone[1]}-${phone[2]}`;
+    if (str !== "") {
+        let phone = str.split("-");
+        return `(${phone[0]}) ${phone[1]}-${phone[2]}`;
+    }
+    return "";
 }
 
 // given a valid phone number in any format, convert to numbers separated by dashes
 function phoneParse(str) {
+    // if input empty, return empty string
+    if (str.length === 0) {
+        return "";
+    }
+
     let num = str.replace(/\D/g, ""); // remove all non-digit characters
 
     // return phone number if valid
     if (num.length === 10) {
         return `${num.substring(0,3)}-${num.substring(3,6)}-${num.substring(6,10)}`;
-    }
-    else if (num.length === 0) {
-        return "";
     }
     return (num.length === 0); // otherwise return false
 }
